@@ -73,7 +73,7 @@ st.markdown("""
         border-radius: 10px;
     }
             
-    /*Contener principal del KPI*/
+    /*Contenedor principal del KPI*/
     .kpi-card{
         background-color: #1E293B;
         border-radius: 15px;
@@ -130,7 +130,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. FUNCIÓN DE LIMPIEZA ORIGINAL
+# 2. FUNCIÓN DE LIMPIEZA DEL DATASET
 # ==========================================
 @st.cache_data
 def limpiar_dataset(ruta_archivo):
@@ -200,7 +200,7 @@ with st.sidebar:
     cultivos_sel = st.multiselect(
         "Seleccione cultivos para analizar:",
         options=list(COLORS.keys()),
-        default=["Maize", "Coffee"]
+        default=["Maize", "Coffee", "Cocoa", "Sugar", "Soybeans"]
     )
     
     year_range = st.slider(
@@ -216,14 +216,13 @@ with st.sidebar:
 df_view = df_original[(df_original["año"] >= year_range[0]) & (df_original["año"] <= year_range[1])]
 
 if not cultivos_sel:
-    st.warning("⚠️ Por favor, seleccione al menos un cultivo en la barra lateral.")
+    st.warning("⚠️ Por favor, seleccione al menos un cultivo en la barra lateral izquierda.")
     st.stop()
 
 # ==========================================
-# 4. CUERPO PRINCIPAL - TABS
+# 4. DISTRIBUCIÓN PRINCIPAL - TABS
 # ==========================================
 st.title("🌾 Análisis Predictivo de Precios Agrícolas")
-#st.caption("Prototipo de Solución - Entrega 4 - Maestría en Análisis de Datos")
 
 tab1, tab2, tab3 = st.tabs(["📊 Comparativa Global", "🔍 Detalle de Mercado", "🔮 Modelado Predictivo"])
 
@@ -238,7 +237,7 @@ with tab1:
         promedio = df_view[crop].mean()
         cv = (volatilidad / promedio) * 100 
 
-        #Iconos y color segun el cultivo
+        #Iconos y color por cultivo
         icono = ICONOS.get(crop,"🌾")
         color_cultivo = COLORS.get(crop,"#43A047")
 
@@ -256,7 +255,7 @@ with tab1:
                 
     st.markdown("---")
     
-    # Gráfica de líneas original (Multivariada)
+    # Gráfica de líneas (Multivariada)
     fig_comp = px.line(
         df_view, x="año", y=cultivos_sel,
         color_discrete_map=COLORS,
@@ -318,7 +317,6 @@ with tab2:
             markers=True
         )
         
-        # Aplicamos el mismo estilo de Tooltip que en el Tab 1
         fig_area.update_layout(
             hovermode="x unified",
             paper_bgcolor='rgba(0,0,0,0)',
@@ -336,14 +334,14 @@ with tab2:
         )
 
         fig_area.update_traces(
-            line_color=COLORS[crop_focus], # Borde/Línea fuerte del color del cultivo
-            line_width=3,                 # Grosor de la línea
-            fill='tozeroy',              # Rellena hacia el eje Y=0
-            fillcolor='rgba(128, 128, 128, 0.1)', # Relleno gris muy tenue y transparente
+            line_color=COLORS[crop_focus], 
+            line_width=3,                 
+            fill='tozeroy',              
+            fillcolor='rgba(128, 128, 128, 0.1)', 
             marker=dict(
                 size=7, 
-                color="#FFFFFF",        # Puntos blancos para contraste
-                line=dict(color=COLORS[crop_focus], width=1.5) # Borde de punto del color del cultivo
+                color="#FFFFFF",        
+                line=dict(color=COLORS[crop_focus], width=1.5)
             ),
             hovertemplate="<b>Año:</b> %{x}<br><b>Precio:</b> %{y:.2f} USD<extra></extra>"
         )
@@ -352,17 +350,15 @@ with tab2:
         
     with col_b:
         st.write(f"**Estadísticas de {ICONOS[crop_focus]} {crop_focus}**")
-        # Preparamos los datos descriptivos para que se vean más limpios
+
         stats_df = df_view[crop_focus].describe().to_frame().T
         
-        # Mostramos la tabla con un estilo más compacto
         st.dataframe(
             df_view[crop_focus].describe(), 
             use_container_width=True,
-            height=300 # Altura fija para alinear con el gráfico
+            height=300
         )
 
-        # Tip informativo extra para rellenar el espacio
         st.info(f"El valor máximo alcanzado por el {crop_focus} fue de **{df_view[crop_focus].max():.2f} USD**.")
 
 # --- TAB 3: PREDICCIÓN ---
@@ -376,7 +372,7 @@ with tab3:
         format_func=lambda x: f"{ICONOS.get(x, '')} {x}"
     )
 
-    # --- CÁLCULOS DEL MODELO (Necesarios antes de mostrar las cards) ---
+    # --- CÁLCULOS DEL MODELO ---
     df_model = df_view[["año", cultivo_pred]].dropna()
     X = df_model[["año"]]
     y = df_model[[cultivo_pred]]
@@ -389,7 +385,6 @@ with tab3:
     precio_min = df_view[cultivo_pred].min()
     precio_actual = df_view[cultivo_pred].iloc[-1]
 
-    # 2. TRANSFORMACIÓN A KPI CARDS MODERNAS
     col1, col2, col3, col4, col5 = st.columns(5)
 
     # Diccionario temporal para iterar las tarjetas
@@ -403,8 +398,6 @@ with tab3:
 
     for i, kpi in enumerate(datos_kpi):
         with [col1, col2, col3, col4, col5][i]:
-            # Añadimos un borde lateral de color si es el RMSE (el último)
-            #border_style = f"border-left: 5px solid {kpi.get('color', '#334155')};"
             st.markdown(f"""
                 <div class="kpi-card" padding: 15px;">
                     <span class="kpi-icon">{kpi['icon']}</span>
@@ -428,13 +421,12 @@ with tab3:
     predicciones = modelo.predict(df_futuro)
     df_pred = pd.DataFrame({"año": años_futuros, "Predicción": predicciones.flatten()})
 
-    # 5. GRÁFICA DE PREDICCIÓN CON ESTILO UNIFICADO
+    # 5. GRÁFICA DE PREDICCIÓN
     fig_pred = px.line(
         df_view, x="año", y=cultivo_pred,
         title=f"Predicción del precio de {cultivo_pred}",
         markers=True,
         template="plotly_dark"
-        #color_discrete_sequence=[COLORS.get(cultivo_pred, "#43A047")]
     )
 
     fig_pred.add_scatter(
@@ -442,12 +434,12 @@ with tab3:
         y=df_pred["Predicción"],
         mode="lines+markers", 
         name="Predicción Futura",
-        line=dict(color="#D32F2F", width=3, dash="dot"), # Rojo para diferenciar la predicción
+        line=dict(color="#D32F2F", width=3, dash="dot"),
         marker=dict(symbol="diamond", size=8, color="#D32F2F"),
         hovertemplate="<b>Predicción:</b> %{y:.2f} USD<extra></extra>"
     )
 
-    # Estilización de la Ventana Emergente (Tooltip) y Fondo
+    # Estilización del Tooltip y Fondo
     fig_pred.update_layout(
         hovermode="x unified",
         hoverlabel=dict(
@@ -470,14 +462,9 @@ with tab3:
     )
 
     fig_pred.update_traces(
-        #line_color=COLORS.get(cultivo_pred, "#43A047"),
-        #line_width=3,
-        #fill='tozeroy',
-        #fillcolor='rgba(128, 128, 128, 0.05)',
-        #name="Histórico"
         line=dict(color=COLORS.get(cultivo_pred, "#43A047"), width=3),
         fill='tozeroy',
-        fillcolor='rgba(128, 128, 128, 0.05)', # Gris casi invisible
+        fillcolor='rgba(128, 128, 128, 0.05)', 
         marker=dict(size=6, color="white", line=dict(width=1, color=COLORS.get(cultivo_pred))),
         name="Histórico",
         hovertemplate="<b>Precio Real:</b> %{y:.2f} USD<extra></extra>"
@@ -491,9 +478,6 @@ with tab3:
         annotation_text="Inicio Predicción",
         annotation_position="top right"
     )
-
-    # Línea vertical de inicio
-    #fig_pred.add_vline(x=df_view["año"].max(), line_dash="dash", line_color="gray")
 
     st.plotly_chart(fig_pred, use_container_width=True)
 
