@@ -149,6 +149,16 @@ st.markdown("""
         font-size: 14px;
         font-weight: bold;
     }
+            
+    div[data-baseweb="select"] input {
+        caret-color: transparent;   
+        cursor: pointer;
+    }
+
+    div[data-baseweb="select"] {
+        background-color: #1E293B !important;
+        border-radius: 8px !important;
+    }
 
     </style>
     """, unsafe_allow_html=True)
