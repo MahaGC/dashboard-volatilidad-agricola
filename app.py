@@ -15,6 +15,15 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown("""
+    <style>
+    html, body, [class*="css"] {
+        background-color: #0E1117 !important;
+        color: white !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 COLORS = {
     "Maize": "#FBC02D",      # Amarillo Maíz
     "Coffee": "#EB4828",     # Café
@@ -31,6 +40,21 @@ st.markdown("""
     /* Fondo general de la app */
     .stApp {
         background-color: #0E1117;
+    }
+            
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background-color: #0E1117 !important;
+    }
+
+    section[data-testid="stSidebar"] * {
+        color: white !important;
+    }
+            
+    /* Inputs */
+    input, textarea {
+        background-color: #1E293B !important;
+        color: white !important;
     }
 
     /* Contenedor de la lista de pestañas */
